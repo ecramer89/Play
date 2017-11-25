@@ -39,8 +39,8 @@ public class CatData : CharacterData {
         CompositeStory eating = new CompositeStory("You might think that housecats have a limited variety of food, but you'd be wrong. ");
 
         CompositeStory eating1 = new CompositeStory("There's a lot of variation among the different food brands.");
-        CompositeStory eating2 = new CompositeStory("On top of that, there's of course different flavors of cat food, like chicken, fish, beef; then within the flavor types there's wet and dry variants.");
-        CompositeStory eating3 = new CompositeStory("I'm no mathematician but that's a lot of combinations.");
+        CompositeStory eating2 = new CompositeStory("There's of course different flavors of cat food, like chicken, fish, beef; then within the flavor types there's wet and dry variants.");
+        CompositeStory eating3 = new CompositeStory("I'm no mathematician, but there's a lot of combinations of cat food.");
     
         eating.GraftStep(eating1);
         eating1.GraftStep(eating2);
