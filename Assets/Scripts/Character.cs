@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using ExtensionMethods;
@@ -29,11 +27,7 @@ public class Character : MonoBehaviour {
     {
         data = GetComponent<CharacterData>();
         story = StoryRepository.GetStory(data.Name());
-   
-        foreach(StoryEvent storyEvent in StoryEventRepository.GetStoryEventsForCharacter(data.Name()))
-        {
-            //storyEvent.subscribe();
-        }
+
 
         textBox = this.gameObject.FindChildWithName("TextBox");
         uIText = textBox.GetComponentInChildren<Text>();
@@ -73,6 +67,7 @@ public class Character : MonoBehaviour {
     }
 
     private void Deactivate() {
+        //unsubscribe from changes in player input
         UIEventDispatcher.Instance.PlayerEnteredNewInput -= AdvanceStory;
         this.textBox.SetActive(false);
         toggleActiveButtonText.text = String.Format("Talk to {0}", data.Name());

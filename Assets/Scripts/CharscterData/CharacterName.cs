@@ -1,6 +1,16 @@
-﻿public enum CharacterName
+﻿public class CharacterName
 {
- Cat
+    public string value;
+    public CharacterName(string value)
+    {
+        this.value = value;
+    }
+
+
+    public override string ToString()
+    {
+        return value;
+    }
 
 }
 
