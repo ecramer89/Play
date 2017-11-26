@@ -5,17 +5,17 @@ public abstract class CharacterData : MonoBehaviour {
 
     protected CharacterName characterName;
     protected Story storyRoot;
-    protected Character character;
+    private Character characterComponent;
 
-    protected Character Character
+    protected Character CharacterComponent
     {
         get
         {
-            if (character == null)
+            if (characterComponent == null)
             {
-                character = GetComponent<Character>();
+                characterComponent = GetComponent<Character>();
             }
-            return character;
+            return characterComponent;
         }
     }
 

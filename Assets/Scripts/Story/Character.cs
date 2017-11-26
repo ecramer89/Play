@@ -26,21 +26,25 @@ public class Character : MonoBehaviour, ISubscriber {
     public void Start()
     {
         data = GetComponent<CharacterData>();
-        story = StoryRepository.GetStory(data.Name());
-
 
         textBox = this.gameObject.FindChildWithName("TextBox");
         uIText = textBox.GetComponentInChildren<Text>();
-        uIText.text = story.text;
-       
-
+        
+      
         toggleActiveButton = this.gameObject.FindChildWithName("ToggleActiveButton");
         toggleActiveButton.GetComponent<Button>().onClick.AddListener(ToggleActive);
         toggleActiveButtonText = toggleActiveButton.GetComponentInChildren<Text>();
 
-      
+        SetStoryToRoot();
         Deactivate();
 
+    }
+
+
+    public void SetStoryToRoot()
+    {
+        story = StoryRepository.GetStory(data.Name());
+        
     }
 
 
@@ -70,19 +74,19 @@ public class Character : MonoBehaviour, ISubscriber {
 
     }
 
-    private void Deactivate() {
+    public void Deactivate() {
         //unsubscribe from changes in player input
         MyEvents.PlayerEnteredNewInput.UnSubscribe(this);
         this.textBox.SetActive(false);
         toggleActiveButtonText.text = String.Format("Talk to {0}", data.Name());
     }
 
-    private void Activate() {
+    public void Activate() {
       
         MyEvents.PlayerEnteredNewInput.Subscribe(this, AdvanceStory);
         this.textBox.SetActive(true);
+        uIText.text = story.text;
         toggleActiveButtonText.text = String.Format("Stop talking to {0}", data.Name());
-
     }
 
 

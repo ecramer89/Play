@@ -26,7 +26,15 @@ public class CatData : CharacterData {
         root.AddInputBasedTransition("(hobbies|hobby|interests|like to do)".MatchSomewhere(), hobbies);
         root.AddInputBasedTransition("(cats suck|i hate cats)".MatchSomewhere(), new Story("I'm done talking to you.", ()=>
         {
-            Debug.Log("do something interested and probably deactivate since this is a leaf"); //consider implemneting factry pattern to create different kinds of storis
+      
+            CharacterComponent.SetStoryToRoot();
+
+            Timer timer = TimerFactory.Instance.NewTimer();
+            timer.onTimeUp = () => { CharacterComponent.Deactivate(); };
+            timer.secondsDuration = .8f;
+            timer.Begin();
+            
+       
         }));
 
 
