@@ -4,40 +4,32 @@ using System.Text.RegularExpressions;
 using System.Linq;
 using System;
 
-using UnityEngine;
-public abstract class Story
-{
-    
+
+public class Story  {
     public string text;
+    public Action effectUponReaching = () => { };
 
-   
-    public Story(string text)
-    {
-        this.text = text;
-    }
-
-    public abstract Story GetTransition(string forInput);
-    
-
-}
-
-public class CompositeStory : Story {
-  
     private Dictionary<string, Story> inputBasedTransitions; //stories the player can only reach by inputting a string that matches some pattern.
     private List<Story> flavorText; //stories that the player can reach whatever they input.
-    private List<CompositeStory> hints;
+    private List<Story> hints;
 
-    private event Action<CompositeStory> hintAddedToStory = (CompositeStory hint) => { };
-    private event Action<Story> flavorTextAddedToStory = (Story flavorText) => { };
-    private event Action<string, Story> inputBasedTransitionAddedToStory = (string input, Story transition) => { };
+    private event Action<Story> HintAddedToStory = (Story hint) => { };
+    private event Action<Story> FlavorTextAddedToStory = (Story flavorText) => { };
+    private event Action<string, Story> InputBasedTransitionAddedToStory = (string input, Story transition) => { };
    
 
-    public CompositeStory(string text) : base(text) {
+    public Story(string text)  {
+        this.text = text;
         this.inputBasedTransitions = new Dictionary<string, Story>();
         this.flavorText = new List<Story>();
-        this.hints = new List<CompositeStory>();
+        this.hints = new List<Story>();
     }
-     
+
+    public Story(string text, Action effectUponReaching) : this(text)
+    {
+        this.effectUponReaching = effectUponReaching;
+    }
+
     /*
      * a recent replacement for loop back to this via... the idea is that I don't think it makes much sense to loop back to the exact same text.
      * what we want to loop back to is a node with different text then the original, but the same subgraph. so instead of looping back to the original node
@@ -45,9 +37,9 @@ public class CompositeStory : Story {
      * 
      * */
 
-    public void GraftLoop(string via, CompositeStory graftIn)
+    public void GraftLoop(string via, Story graftIn)
     {
-        CompositeStory intermediary = new CompositeStory(via);
+        Story intermediary = new Story(via);
         graftIn.TakeEntireSubgraphOf(this);
         intermediary.AddFlavorText(graftIn);
         AddFlavorText(intermediary);
@@ -62,7 +54,7 @@ public class CompositeStory : Story {
      * in the actual game, when the user fails to match a transition, hints will be delivered before free transitions.
      * 
      * */
-    public void AddHint(CompositeStory hint)
+    public void AddHint(Story hint)
     {
        
         //note that hints don't take the entire hint set of this;
@@ -73,31 +65,31 @@ public class CompositeStory : Story {
         hints.Add(hint);
 
         //notify subscribers who also want to take this hint
-        hintAddedToStory(hint); 
+        HintAddedToStory(hint); 
     }
 
     public void AddInputBasedTransition(string inputPattern, Story transitionTo)
     {
         inputBasedTransitions[inputPattern] = transitionTo;
 
-        inputBasedTransitionAddedToStory(inputPattern, transitionTo);
+        InputBasedTransitionAddedToStory(inputPattern, transitionTo);
     }
 
     public void AddFlavorText(Story transitonTo)
     {
         flavorText.Add(transitonTo);
 
-        flavorTextAddedToStory(transitonTo);
+        FlavorTextAddedToStory(transitonTo);
     }
 
-    public override Story GetTransition(string forInput)
+    public Story GetTransition(string forInput)
     {
         Story result = TryMatchInput(forInput);
         if (result != null) return result;
 
         if (hints.Count > 0)
         {
-            CompositeStory hint = hints.First();
+            Story hint = hints.First();
             hint.hints = hints.Skip(1).Take(hints.Count - 1).ToList();
             return hint;
         }
@@ -106,6 +98,7 @@ public class CompositeStory : Story {
 
     }
 
+   
     /*
      * very similar to loopGraft, only the transition to the grafted composite is an input pattern, as opposed to a free transition as 
      * is assumed with LoopGraft. Use Graft to create additional steps in a story w/o having to actually build out new subgraphs.
@@ -114,7 +107,7 @@ public class CompositeStory : Story {
      * get all hints/input based transitions/flavor texts that are cureently saved to this and all future ones, but this won't get the hints/flavor texts/etc that are
      * added to the grafted in story
      * */
-    public void GraftStep(string viaInput, CompositeStory step)
+    public void GraftStep(string viaInput, Story step)
     {
         step.TakeEntireSubgraphOf(this);
         this.AddInputBasedTransition(viaInput, step);
@@ -126,21 +119,21 @@ public class CompositeStory : Story {
      *  graft in an intermediary step that the player can trigger via entering anything.
      * 
      * */
-    public void GraftStep(CompositeStory step)
+    public void GraftStep(Story step)
     {
         step.TakeEntireSubgraphOf(this);
         this.AddFlavorText(step);
 
     }
 
-    private void TakeEntireSubgraphOf(CompositeStory of)
+    private void TakeEntireSubgraphOf(Story of)
     {
         TakeTransitionsOf(of);
         TakeFlavorTextOf(of);
         TakeHintsOf(of);
     }
 
-    private void TakeTransitionsOf(CompositeStory of)
+    private void TakeTransitionsOf(Story of)
     {
         foreach (KeyValuePair<string, Story> transition in of.inputBasedTransitions)
         {
@@ -150,31 +143,31 @@ public class CompositeStory : Story {
             
         }
 
-        of.inputBasedTransitionAddedToStory += AddInputBasedTransition;
+        of.InputBasedTransitionAddedToStory += AddInputBasedTransition;
 
 
     }
 
-    private void TakeFlavorTextOf(CompositeStory of)
+    private void TakeFlavorTextOf(Story of)
     {
         foreach (Story free in of.flavorText)
         {
             this.AddFlavorText(free);
         }
 
-        of.flavorTextAddedToStory += AddFlavorText;
+        of.FlavorTextAddedToStory += AddFlavorText;
 
     }
 
-    private void TakeHintsOf(CompositeStory of)
+    private void TakeHintsOf(Story of)
     {
         //take all the hints that of currently possesses
-        foreach(CompositeStory hint in of.hints){
+        foreach(Story hint in of.hints){
             this.AddHint(hint);
         }
 
         //subscribe to take all hints that will be added to of in the future
-        of.hintAddedToStory += AddHint;
+        of.HintAddedToStory += AddHint;
     }
 
     private Story TryMatchInput(string forInput)
@@ -199,14 +192,5 @@ public class CompositeStory : Story {
     }
 
 }
-public class LeafStory : Story {
-    
-    public LeafStory(string text) : base(text) { }
 
-    public override Story GetTransition(string forInput)
-    {
-        return this;
-    }
-
-}
 

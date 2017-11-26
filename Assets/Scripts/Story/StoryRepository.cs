@@ -16,6 +16,7 @@ public class StoryRepository {
             .ToList()
             .ForEach(characterData =>
             {
+               
                 storyRepository[characterData.Name()] = characterData.StoryRoot();
             });
 

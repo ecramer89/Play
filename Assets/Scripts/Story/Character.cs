@@ -48,9 +48,13 @@ public class Character : MonoBehaviour, ISubscriber {
     {
         
         this.story = this.story.GetTransition(playerInput);
-     
+
         this.uIText.text = story.text;
+
+        story.effectUponReaching();
     }
+
+
 
     public void ToggleActive()
     {
@@ -74,14 +78,7 @@ public class Character : MonoBehaviour, ISubscriber {
     }
 
     private void Activate() {
-        //reset the character's story to the root, if we deactivated upon reaching a leaf
-    
-        if (story is LeafStory)
-        { 
-            story = StoryRepository.GetStory(data.Name());
-            this.uIText.text = story.text;
-        }
-
+      
         MyEvents.PlayerEnteredNewInput.Subscribe(this, AdvanceStory);
         this.textBox.SetActive(true);
         toggleActiveButtonText.text = String.Format("Stop talking to {0}", data.Name());
