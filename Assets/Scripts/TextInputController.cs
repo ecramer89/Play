@@ -9,7 +9,6 @@ public class TextInputController : MonoBehaviour {
 
     public void BroadcastPlayerInput()
     {
-        UIEventDispatcher.Instance.FirePlayerEnteredNewInput(playerInput.text);
-
+        MyEvents.PlayerEnteredNewInput.Fire(playerInput.text);
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using ExtensionMethods;
 
 [RequireComponent(typeof(CharacterData))]
-public class Character : MonoBehaviour {
+public class Character : MonoBehaviour, ISubscriber {
 
     private CharacterData data;
 
@@ -68,7 +68,7 @@ public class Character : MonoBehaviour {
 
     private void Deactivate() {
         //unsubscribe from changes in player input
-        UIEventDispatcher.Instance.PlayerEnteredNewInput -= AdvanceStory;
+        MyEvents.PlayerEnteredNewInput.UnSubscribe(this);
         this.textBox.SetActive(false);
         toggleActiveButtonText.text = String.Format("Talk to {0}", data.Name());
     }
@@ -81,8 +81,8 @@ public class Character : MonoBehaviour {
             story = StoryRepository.GetStory(data.Name());
             this.uIText.text = story.text;
         }
-    
-        UIEventDispatcher.Instance.PlayerEnteredNewInput += AdvanceStory;
+
+        MyEvents.PlayerEnteredNewInput.Subscribe(this, AdvanceStory);
         this.textBox.SetActive(true);
         toggleActiveButtonText.text = String.Format("Stop talking to {0}", data.Name());
 
