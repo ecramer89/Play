@@ -8,6 +8,11 @@ public class ChatToCat : StoryModel {
 
     private string catName = "Puzzle";
 
+
+    StoryNode genericRoot;
+    StoryNode playerAngeredCatRoot;
+
+
     protected override void InitializeStoryTitle()
     {
         title = "Chat to cat";
@@ -17,16 +22,24 @@ public class ChatToCat : StoryModel {
     protected override void InitializeStoryRoot()
     {
       
-        StoryNode root = new StoryNode("...");
+        genericRoot = new StoryNode("...");
+
+        playerAngeredCatRoot = new StoryNode("Humph. I'm surprised you have the gumption to show your face to me again.");
+        StoryNode acceptApology = new StoryNode("Ok whatever.", () => {
+            this.storyRoot = genericRoot; //cat's okay now, so make the root the generic root.
+        });
+        playerAngeredCatRoot.AddInputBasedTransition("(sorry|i didn't mean it|i apologize|forgive me)".MatchSomewhere(), acceptApology);
+        acceptApology.TakeEntireSubgraphOf(genericRoot);
 
         StoryNode hobbies = new StoryNode("I have several hobbies. Eating, sleeping, " +
         "staring out the window. Ask me about one of them.");
 
   
-        root.AddInputBasedTransition("(hobbies|hobby|interests|like to do)".MatchSomewhere(), hobbies);
-        root.AddInputBasedTransition("(cats suck|i hate cats)".MatchSomewhere(), new StoryNode("I'm done talking to you.", ()=>
+        genericRoot.AddInputBasedTransition("(hobbies|hobby|interests|like to do)".MatchSomewhere(), hobbies);
+        genericRoot.AddInputBasedTransition("(cats suck|i hate cats)".MatchSomewhere(), new StoryNode("I'm done talking to you.", ()=>
         {
-      
+            this.storyRoot = playerAngeredCatRoot; //next time player engages cat, he'll encounter the player angered cat root.
+
             View.SetStoryToRoot();
 
             Timer timer = TimerFactory.Instance.NewTimer();
@@ -38,10 +51,12 @@ public class ChatToCat : StoryModel {
         }));
 
 
-        root.AddHint(new StoryNode("You could ask me about my hobbies..."));
-        root.GraftStep("(hello|hi|greetings)".MatchSomewhere(), new StoryNode("Hello"));
+        genericRoot.AddHint(new StoryNode("You could ask me about my hobbies..."));
 
-      
+        
+        genericRoot.GraftStep("(hello|hi|greetings)".MatchSomewhere(), new StoryNode("Hello"));
+
+
         StoryNode sleeping = new StoryNode("Sleeping... well my interest began when I was a wee kitten. " +
             "My mother was a champion sleeper. She was my inspiration. She slept all throughout my kittenhood, and " +
             "then when I outgrew my childish energy I followed in her pawsteps. I always have such interesting dreams.");
@@ -88,6 +103,6 @@ public class ChatToCat : StoryModel {
         mother.GraftLoop("Sorry. Bit spaced out. Thinking of my mom does that to me.", new StoryNode(string.Format("<--{0} is thinking about his mother.-->", catName)));
         dreams.GraftLoop("Dreams are pretty strange. I wonder if other animals have them.", new StoryNode(string.Format("<--{0}'s just staring into space-->", catName)));
 
-        this.storyRoot = root;
+        this.storyRoot = genericRoot;
     }
 }

@@ -10,18 +10,18 @@ public class StoryNode  {
     public Action effectUponReaching = () => { };
 
     private Dictionary<string, StoryNode> inputBasedTransitions; //stories the player can only reach by inputting a string that matches some pattern.
-    private List<StoryNode> flavorText; //stories that the player can reach whatever they input.
+    private List<StoryNode> freeTransition; //stories that the player can reach whatever they input.
     private List<StoryNode> hints;
 
     private event Action<StoryNode> HintAddedToStory = (StoryNode hint) => { };
-    private event Action<StoryNode> FlavorTextAddedToStory = (StoryNode flavorText) => { };
+    private event Action<StoryNode> FreeTransitionAddedToStory = (StoryNode flavorText) => { };
     private event Action<string, StoryNode> InputBasedTransitionAddedToStory = (string input, StoryNode transition) => { };
    
 
     public StoryNode(string text)  {
         this.text = text;
         this.inputBasedTransitions = new Dictionary<string, StoryNode>();
-        this.flavorText = new List<StoryNode>();
+        this.freeTransition = new List<StoryNode>();
         this.hints = new List<StoryNode>();
     }
 
@@ -41,8 +41,8 @@ public class StoryNode  {
     {
         StoryNode intermediary = new StoryNode(via);
         graftIn.TakeEntireSubgraphOf(this);
-        intermediary.AddFlavorText(graftIn);
-        AddFlavorText(intermediary);
+        intermediary.AddFreeTransition(graftIn);
+        AddFreeTransition(intermediary);
     }
 
 
@@ -61,7 +61,7 @@ public class StoryNode  {
         //each hint should only take the hints that -would follow it- in the queue of its parent,
         //so the specific hints that any one will get depends on what's added afterwards.
         hint.TakeTransitionsOf(this);
-        hint.TakeFlavorTextOf(this);
+        hint.TakeFreeTransitionsOf(this);
         hints.Add(hint);
 
         //notify subscribers who also want to take this hint
@@ -75,11 +75,11 @@ public class StoryNode  {
         InputBasedTransitionAddedToStory(inputPattern, transitionTo);
     }
 
-    public void AddFlavorText(StoryNode transitonTo)
+    public void AddFreeTransition(StoryNode transitonTo)
     {
-        flavorText.Add(transitonTo);
+        freeTransition.Add(transitonTo);
 
-        FlavorTextAddedToStory(transitonTo);
+        FreeTransitionAddedToStory(transitonTo);
     }
 
     public StoryNode GetTransition(string forInput)
@@ -122,14 +122,14 @@ public class StoryNode  {
     public void GraftStep(StoryNode step)
     {
         step.TakeEntireSubgraphOf(this);
-        this.AddFlavorText(step);
+        this.AddFreeTransition(step);
 
     }
 
-    private void TakeEntireSubgraphOf(StoryNode of)
+    public void TakeEntireSubgraphOf(StoryNode of)
     {
         TakeTransitionsOf(of);
-        TakeFlavorTextOf(of);
+        TakeFreeTransitionsOf(of);
         TakeHintsOf(of);
     }
 
@@ -148,14 +148,14 @@ public class StoryNode  {
 
     }
 
-    private void TakeFlavorTextOf(StoryNode of)
+    private void TakeFreeTransitionsOf(StoryNode of)
     {
-        foreach (StoryNode free in of.flavorText)
+        foreach (StoryNode free in of.freeTransition)
         {
-            this.AddFlavorText(free);
+            this.AddFreeTransition(free);
         }
 
-        of.FlavorTextAddedToStory += AddFlavorText;
+        of.FreeTransitionAddedToStory += AddFreeTransition;
 
     }
 
@@ -187,8 +187,8 @@ public class StoryNode  {
     }
 
     private StoryNode GetRandomFlavorText()
-    {   if (flavorText.Count == 0) return this;
-        return flavorText[Utils.random.Next(flavorText.Count)];
+    {   if (freeTransition.Count == 0) return this;
+        return freeTransition[Utils.random.Next(freeTransition.Count)];
     }
 
 }
