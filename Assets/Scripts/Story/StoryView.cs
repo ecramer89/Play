@@ -43,9 +43,13 @@ public class StoryView : MonoBehaviour, ISubscriber {
 
     public void SetStoryToRoot()
     {
-        story = model.StoryRoot();
+        SetStory(model.StoryRoot());
     }
 
+    public void SetStory(StoryNode story)
+    {
+        this.story = story;
+    }
 
     private void AdvanceStory(string playerInput)
     {

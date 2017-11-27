@@ -16,7 +16,8 @@ public class StoryNode  {
     private event Action<StoryNode> HintAddedToStory = (StoryNode hint) => { };
     private event Action<StoryNode> FreeTransitionAddedToStory = (StoryNode flavorText) => { };
     private event Action<string, StoryNode> InputBasedTransitionAddedToStory = (string input, StoryNode transition) => { };
-   
+
+    private event Action<string> InputBasedTransitionRemovedFromStory = (string input) => { };
 
     public StoryNode(string text)  {
         this.text = text;
@@ -37,12 +38,22 @@ public class StoryNode  {
      * 
      * */
 
-    public void GraftLoop(string via, StoryNode graftIn)
+    public void GraftLoop(StoryNode intermediary, StoryNode loopTo)
     {
-        StoryNode intermediary = new StoryNode(via);
-        graftIn.TakeEntireSubgraphOf(this);
-        intermediary.AddFreeTransition(graftIn);
+        loopTo.TakeEntireSubgraphOf(this);
+        intermediary.AddFreeTransition(loopTo);
         AddFreeTransition(intermediary);
+    }
+
+
+    public void RemoveInputBasedTransition(string input)
+    {
+        if (inputBasedTransitions.ContainsKey(input))
+        {
+            inputBasedTransitions.Remove(input);
+        }
+
+        InputBasedTransitionRemovedFromStory(input);
     }
 
 
@@ -144,6 +155,7 @@ public class StoryNode  {
         }
 
         of.InputBasedTransitionAddedToStory += AddInputBasedTransition;
+        of.InputBasedTransitionRemovedFromStory += RemoveInputBasedTransition;
 
 
     }

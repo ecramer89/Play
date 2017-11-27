@@ -28,6 +28,8 @@ public class ChatToCat : StoryModel {
         StoryNode acceptApology = new StoryNode("Ok whatever.", () => {
             this.storyRoot = genericRoot; //cat's okay now, so make the root the generic root.
         });
+        playerAngeredCatRoot.AddHint(new StoryNode("I'd accept an apology."));
+       
         playerAngeredCatRoot.AddInputBasedTransition("(sorry|i didn't mean it|i apologize|forgive me)".MatchSomewhere(), acceptApology);
         acceptApology.TakeEntireSubgraphOf(genericRoot);
 
@@ -35,7 +37,7 @@ public class ChatToCat : StoryModel {
         "staring out the window. Ask me about one of them.");
 
   
-        genericRoot.AddInputBasedTransition("(hobbies|hobby|interests|like to do)".MatchSomewhere(), hobbies);
+        genericRoot.AddInputBasedTransition("(hobbies|hobby|interests|like to do|what are they)".MatchSomewhere(), hobbies);
         genericRoot.AddInputBasedTransition("(cats suck|i hate cats)".MatchSomewhere(), new StoryNode("I'm done talking to you.", ()=>
         {
             this.storyRoot = playerAngeredCatRoot; //next time player engages cat, he'll encounter the player angered cat root.
@@ -78,6 +80,47 @@ public class ChatToCat : StoryModel {
         eating.AddInputBasedTransition("(prefer|favorite|like|love|best)".MatchSomewhere(), favoriteFoods);
 
 
+        StoryNode window = new StoryNode("Not many people appreciate windows.");
+        StoryNode sawSomethingInteresting = new StoryNode("There was a time... I saw something very interesting.");
+        sawSomethingInteresting.GraftStep(new StoryNode(string.Format("<--{0} has a faraway look in his eyes -->", catName)));
+        window.GraftStep(sawSomethingInteresting);
+   
+        window.AddHint(new StoryNode("Would you like to hear about the most interesting thing I ever saw through a window?"));
+
+        StoryNode sawAnotherCat = new StoryNode("I saw another cat.");
+        StoryNode sawAnotherCat1 = new StoryNode("It was long and black.");
+        StoryNode sawAnotherCat2 = new StoryNode("He was interesting because he didn't have a colllar. That's pretty unusual around here.");
+        sawAnotherCat.AddFreeTransition(sawAnotherCat1);
+        sawAnotherCat1.AddFreeTransition(sawAnotherCat2);
+   
+        window.AddInputBasedTransition("(see|saw|what was|look)".MatchSomewhere(), sawAnotherCat);
+
+        StoryNode catLooksAwkward = new StoryNode(string.Format("<-- {0} looks very uncomfortable -->", catName));
+        sawAnotherCat2.AddFreeTransition(catLooksAwkward);
+
+        catLooksAwkward.GraftStep(new StoryNode("Maybe I shouldn't have brought this up. I don't know why I did."));
+        catLooksAwkward.GraftStep(new StoryNode("I feel odd talking about him."));
+
+        StoryNode catKnowsHim = new StoryNode("Well... I knew him.");
+
+        catLooksAwkward.AddInputBasedTransition("(wrong?|okay?|uncomfortable|what's up?)".MatchSomewhere(), catKnowsHim);
+
+        StoryNode hisNameWasRiddle = new StoryNode("He was a childhood friend. His name is Riddle.");
+
+        catKnowsHim.AddInputBasedTransition("(name|who|how|from where|from when|how long)".MatchSomewhere(), hisNameWasRiddle);
+
+        
+        StoryNode hobbiesWithoutWindow = new StoryNode("My other hobbies are eating and sleeping.");
+        hobbiesWithoutWindow.TakeEntireSubgraphOf(hobbies);
+        
+        StoryNode catWantsToStopTalkingAboutRiddle = new StoryNode("Let's discuss something else.", ()=> {
+            hobbies.RemoveInputBasedTransition("window");
+            View.SetStory(hobbiesWithoutWindow);
+        });
+
+        hisNameWasRiddle.AddFreeTransition(catWantsToStopTalkingAboutRiddle);
+
+        hobbies.AddInputBasedTransition("window", window);
         hobbies.AddInputBasedTransition("sleep".MatchSomewhere(), sleeping);
         hobbies.AddInputBasedTransition("(eat|food)".MatchSomewhere(), eating);
 
@@ -100,8 +143,8 @@ public class ChatToCat : StoryModel {
         mother.AddInputBasedTransition("dream".MatchSomewhere(), sleeping);
         dreams.AddInputBasedTransition("(mother|mom)".MatchSomewhere(), sleeping);
 
-        mother.GraftLoop("Sorry. Bit spaced out. Thinking of my mom does that to me.", new StoryNode(string.Format("<--{0} is thinking about his mother.-->", catName)));
-        dreams.GraftLoop("Dreams are pretty strange. I wonder if other animals have them.", new StoryNode(string.Format("<--{0}'s just staring into space-->", catName)));
+        mother.GraftLoop(new StoryNode("Sorry. Bit spaced out. Thinking of my mom does that to me."), new StoryNode(string.Format("<--{0} is thinking about his mother.-->", catName)));
+        dreams.GraftLoop(new StoryNode("Dreams are pretty strange. I wonder if other animals have them."), new StoryNode(string.Format("<--{0}'s just staring into space-->", catName)));
 
         this.storyRoot = genericRoot;
     }
