@@ -5,27 +5,27 @@ using System.Linq;
 using System;
 
 
-public class Story  {
+public class StoryNode  {
     public string text;
     public Action effectUponReaching = () => { };
 
-    private Dictionary<string, Story> inputBasedTransitions; //stories the player can only reach by inputting a string that matches some pattern.
-    private List<Story> flavorText; //stories that the player can reach whatever they input.
-    private List<Story> hints;
+    private Dictionary<string, StoryNode> inputBasedTransitions; //stories the player can only reach by inputting a string that matches some pattern.
+    private List<StoryNode> flavorText; //stories that the player can reach whatever they input.
+    private List<StoryNode> hints;
 
-    private event Action<Story> HintAddedToStory = (Story hint) => { };
-    private event Action<Story> FlavorTextAddedToStory = (Story flavorText) => { };
-    private event Action<string, Story> InputBasedTransitionAddedToStory = (string input, Story transition) => { };
+    private event Action<StoryNode> HintAddedToStory = (StoryNode hint) => { };
+    private event Action<StoryNode> FlavorTextAddedToStory = (StoryNode flavorText) => { };
+    private event Action<string, StoryNode> InputBasedTransitionAddedToStory = (string input, StoryNode transition) => { };
    
 
-    public Story(string text)  {
+    public StoryNode(string text)  {
         this.text = text;
-        this.inputBasedTransitions = new Dictionary<string, Story>();
-        this.flavorText = new List<Story>();
-        this.hints = new List<Story>();
+        this.inputBasedTransitions = new Dictionary<string, StoryNode>();
+        this.flavorText = new List<StoryNode>();
+        this.hints = new List<StoryNode>();
     }
 
-    public Story(string text, Action effectUponReaching) : this(text)
+    public StoryNode(string text, Action effectUponReaching) : this(text)
     {
         this.effectUponReaching = effectUponReaching;
     }
@@ -37,9 +37,9 @@ public class Story  {
      * 
      * */
 
-    public void GraftLoop(string via, Story graftIn)
+    public void GraftLoop(string via, StoryNode graftIn)
     {
-        Story intermediary = new Story(via);
+        StoryNode intermediary = new StoryNode(via);
         graftIn.TakeEntireSubgraphOf(this);
         intermediary.AddFlavorText(graftIn);
         AddFlavorText(intermediary);
@@ -54,7 +54,7 @@ public class Story  {
      * in the actual game, when the user fails to match a transition, hints will be delivered before free transitions.
      * 
      * */
-    public void AddHint(Story hint)
+    public void AddHint(StoryNode hint)
     {
        
         //note that hints don't take the entire hint set of this;
@@ -68,28 +68,28 @@ public class Story  {
         HintAddedToStory(hint); 
     }
 
-    public void AddInputBasedTransition(string inputPattern, Story transitionTo)
+    public void AddInputBasedTransition(string inputPattern, StoryNode transitionTo)
     {
         inputBasedTransitions[inputPattern] = transitionTo;
 
         InputBasedTransitionAddedToStory(inputPattern, transitionTo);
     }
 
-    public void AddFlavorText(Story transitonTo)
+    public void AddFlavorText(StoryNode transitonTo)
     {
         flavorText.Add(transitonTo);
 
         FlavorTextAddedToStory(transitonTo);
     }
 
-    public Story GetTransition(string forInput)
+    public StoryNode GetTransition(string forInput)
     {
-        Story result = TryMatchInput(forInput);
+        StoryNode result = TryMatchInput(forInput);
         if (result != null) return result;
 
         if (hints.Count > 0)
         {
-            Story hint = hints.First();
+            StoryNode hint = hints.First();
             hint.hints = hints.Skip(1).Take(hints.Count - 1).ToList();
             return hint;
         }
@@ -107,7 +107,7 @@ public class Story  {
      * get all hints/input based transitions/flavor texts that are cureently saved to this and all future ones, but this won't get the hints/flavor texts/etc that are
      * added to the grafted in story
      * */
-    public void GraftStep(string viaInput, Story step)
+    public void GraftStep(string viaInput, StoryNode step)
     {
         step.TakeEntireSubgraphOf(this);
         this.AddInputBasedTransition(viaInput, step);
@@ -119,23 +119,23 @@ public class Story  {
      *  graft in an intermediary step that the player can trigger via entering anything.
      * 
      * */
-    public void GraftStep(Story step)
+    public void GraftStep(StoryNode step)
     {
         step.TakeEntireSubgraphOf(this);
         this.AddFlavorText(step);
 
     }
 
-    private void TakeEntireSubgraphOf(Story of)
+    private void TakeEntireSubgraphOf(StoryNode of)
     {
         TakeTransitionsOf(of);
         TakeFlavorTextOf(of);
         TakeHintsOf(of);
     }
 
-    private void TakeTransitionsOf(Story of)
+    private void TakeTransitionsOf(StoryNode of)
     {
-        foreach (KeyValuePair<string, Story> transition in of.inputBasedTransitions)
+        foreach (KeyValuePair<string, StoryNode> transition in of.inputBasedTransitions)
         {
             //important to invoke method, not directly update dictionary key, 
             //because anything nodes that were grafted into this should also receive the subgraph of of.
@@ -148,9 +148,9 @@ public class Story  {
 
     }
 
-    private void TakeFlavorTextOf(Story of)
+    private void TakeFlavorTextOf(StoryNode of)
     {
-        foreach (Story free in of.flavorText)
+        foreach (StoryNode free in of.flavorText)
         {
             this.AddFlavorText(free);
         }
@@ -159,10 +159,10 @@ public class Story  {
 
     }
 
-    private void TakeHintsOf(Story of)
+    private void TakeHintsOf(StoryNode of)
     {
         //take all the hints that of currently possesses
-        foreach(Story hint in of.hints){
+        foreach(StoryNode hint in of.hints){
             this.AddHint(hint);
         }
 
@@ -170,10 +170,10 @@ public class Story  {
         of.HintAddedToStory += AddHint;
     }
 
-    private Story TryMatchInput(string forInput)
+    private StoryNode TryMatchInput(string forInput)
     {
 
-        foreach (KeyValuePair<string, Story> entry in inputBasedTransitions)
+        foreach (KeyValuePair<string, StoryNode> entry in inputBasedTransitions)
         {
             
             if (Regex.IsMatch(forInput, entry.Key))
@@ -186,7 +186,7 @@ public class Story  {
         return null;
     }
 
-    private Story GetRandomFlavorText()
+    private StoryNode GetRandomFlavorText()
     {   if (flavorText.Count == 0) return this;
         return flavorText[Utils.random.Next(flavorText.Count)];
     }

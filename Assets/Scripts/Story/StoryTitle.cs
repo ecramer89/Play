@@ -1,7 +1,7 @@
-﻿public class CharacterName
+﻿public class StoryTitle
 {
     public string value;
-    public CharacterName(string value)
+    public StoryTitle(string value)
     {
         this.value = value;
     }

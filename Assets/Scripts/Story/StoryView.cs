@@ -3,10 +3,10 @@ using UnityEngine;
 using UnityEngine.UI;
 using ExtensionMethods;
 
-[RequireComponent(typeof(CharacterData))]
-public class Character : MonoBehaviour, ISubscriber {
+[RequireComponent(typeof(StoryModel))]
+public class StoryView : MonoBehaviour, ISubscriber {
 
-    private CharacterData data;
+    private StoryModel model;
 
     private GameObject textBox;
     private Text uIText;
@@ -14,7 +14,7 @@ public class Character : MonoBehaviour, ISubscriber {
     private GameObject toggleActiveButton;
     private Text toggleActiveButtonText;
 
-    private Story story;
+    private StoryNode story;
 
     private bool active; 
 
@@ -25,7 +25,7 @@ public class Character : MonoBehaviour, ISubscriber {
 
     public void Start()
     {
-        data = GetComponent<CharacterData>();
+        model = GetComponent<StoryModel>();
 
         textBox = this.gameObject.FindChildWithName("TextBox");
         uIText = textBox.GetComponentInChildren<Text>();
@@ -43,8 +43,7 @@ public class Character : MonoBehaviour, ISubscriber {
 
     public void SetStoryToRoot()
     {
-        story = StoryRepository.GetStory(data.Name());
-        
+        story = model.GetBeginning();
     }
 
 
@@ -78,7 +77,7 @@ public class Character : MonoBehaviour, ISubscriber {
         //unsubscribe from changes in player input
         MyEvents.PlayerEnteredNewInput.UnSubscribe(this);
         this.textBox.SetActive(false);
-        toggleActiveButtonText.text = String.Format("Talk to {0}", data.Name());
+        toggleActiveButtonText.text = model.GetTitle().ToString();
     }
 
     public void Activate() {
@@ -86,7 +85,7 @@ public class Character : MonoBehaviour, ISubscriber {
         MyEvents.PlayerEnteredNewInput.Subscribe(this, AdvanceStory);
         this.textBox.SetActive(true);
         uIText.text = story.text;
-        toggleActiveButtonText.text = String.Format("Stop talking to {0}", data.Name());
+        toggleActiveButtonText.text = "End";
     }
 
 
