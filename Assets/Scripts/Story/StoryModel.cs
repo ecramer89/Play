@@ -3,7 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(StoryView))]
 public abstract class StoryModel : MonoBehaviour {
 
-    protected StoryTitle title;
+    protected string title;
     protected StoryNode storyRoot;
     private StoryView view;
 
@@ -19,12 +19,12 @@ public abstract class StoryModel : MonoBehaviour {
         }
     }
 
-    public StoryTitle GetTitle()
+    public string GetTitle()
     {  if (title == null) InitializeStoryTitle();
         return title;
     }
 
-     public StoryNode GetBeginning()
+     public StoryNode StoryRoot()
     {   if (storyRoot == null) InitializeStoryRoot();
         return storyRoot;
     }

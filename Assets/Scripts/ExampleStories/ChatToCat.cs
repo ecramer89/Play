@@ -10,7 +10,7 @@ public class ChatToCat : StoryModel {
 
     protected override void InitializeStoryTitle()
     {
-        title = new StoryTitle("Chat to cat");
+        title = "Chat to cat";
     }
 
 

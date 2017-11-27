@@ -43,7 +43,7 @@ public class StoryView : MonoBehaviour, ISubscriber {
 
     public void SetStoryToRoot()
     {
-        story = model.GetBeginning();
+        story = model.StoryRoot();
     }
 
 
@@ -77,7 +77,7 @@ public class StoryView : MonoBehaviour, ISubscriber {
         //unsubscribe from changes in player input
         MyEvents.PlayerEnteredNewInput.UnSubscribe(this);
         this.textBox.SetActive(false);
-        toggleActiveButtonText.text = model.GetTitle().ToString();
+        toggleActiveButtonText.text = model.GetTitle();
     }
 
     public void Activate() {
