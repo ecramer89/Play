@@ -25,11 +25,11 @@ public abstract class StoryModel : MonoBehaviour {
     }
 
      public StoryNode StoryRoot()
-    {   if (storyRoot == null) InitializeStoryRoot();
+    {   if (storyRoot == null) InitRoot();
         return storyRoot;
     }
 
-    protected abstract void InitializeStoryRoot();
+    protected abstract void InitRoot();
 
     protected abstract void InitializeStoryTitle();
 }
