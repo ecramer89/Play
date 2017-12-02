@@ -9,7 +9,7 @@ public class ChatToCat : StoryModel {
     private string catName = "Puzzle";
 
 
-    StoryNode genericRoot;
+    StoryNode root;
     StoryNode playerAngeredCatRoot;
 
 
@@ -22,23 +22,25 @@ public class ChatToCat : StoryModel {
     protected override void InitializeStoryRoot()
     {
       
-        genericRoot = new StoryNode("...");
+        root = new StoryNode("...");
+
+        StoryNode riddleBranch = RiddleBranch();
 
         playerAngeredCatRoot = new StoryNode("Humph. I'm surprised you have the gumption to show your face to me again.");
         StoryNode acceptApology = new StoryNode("Ok whatever.", () => {
-            this.storyRoot = genericRoot; //cat's okay now, so make the root the generic root.
+            this.storyRoot = root; //cat's okay now, so make the root the generic root.
         });
         playerAngeredCatRoot.AddHint(new StoryNode("I'd accept an apology."));
        
         playerAngeredCatRoot.AddInputBasedTransition("(sorry|i didn't mean it|i apologize|forgive me)".MatchSomewhere(), acceptApology);
-        acceptApology.TakeEntireSubgraphOf(genericRoot);
+        acceptApology.TakeEntireSubgraphOf(root);
 
         StoryNode hobbies = new StoryNode("I have several hobbies. Eating, sleeping, " +
         "staring out the window. Ask me about one of them.");
 
   
-        genericRoot.AddInputBasedTransition("(hobbies|hobby|interests|like to do|what are they)".MatchSomewhere(), hobbies);
-        genericRoot.AddInputBasedTransition("(cats suck|i hate cats)".MatchSomewhere(), new StoryNode("I'm done talking to you.", ()=>
+        root.AddInputBasedTransition("(hobbies|hobby|interests|like to do|what are they)".MatchSomewhere(), hobbies);
+        root.AddInputBasedTransition("(cats suck|i hate cats)".MatchSomewhere(), new StoryNode("I'm done talking to you.", ()=>
         {
             this.storyRoot = playerAngeredCatRoot; //next time player engages cat, he'll encounter the player angered cat root.
 
@@ -53,10 +55,10 @@ public class ChatToCat : StoryModel {
         }));
 
 
-        genericRoot.AddHint(new StoryNode("You could ask me about my hobbies..."));
+        root.AddHint(new StoryNode("You could ask me about my hobbies..."));
 
         
-        genericRoot.GraftStep("(hello|hi|greetings)".MatchSomewhere(), new StoryNode("Hello"));
+        root.GraftStep("(hello|hi|greetings)".MatchSomewhere(), new StoryNode("Hello"));
 
 
         StoryNode sleeping = new StoryNode("Sleeping... well my interest began when I was a wee kitten. " +
@@ -85,7 +87,7 @@ public class ChatToCat : StoryModel {
         sawSomethingInteresting.GraftStep(new StoryNode(string.Format("<--{0} has a faraway look in his eyes -->", catName)));
         window.GraftStep(sawSomethingInteresting);
    
-        window.AddHint(new StoryNode("Would you like to hear about the most interesting thing I ever saw through a window?"));
+        window.AddHint(new StoryNode("No one ever wants to hear about the most interesting thing I've seen."));
 
         StoryNode sawAnotherCat = new StoryNode("I saw another cat.");
         StoryNode sawAnotherCat1 = new StoryNode("It was long and black.");
@@ -108,14 +110,30 @@ public class ChatToCat : StoryModel {
         StoryNode hisNameWasRiddle = new StoryNode("He was a childhood friend. His name is Riddle.");
 
         catKnowsHim.AddInputBasedTransition("(name|who|how|from where|from when|how long)".MatchSomewhere(), hisNameWasRiddle);
-
+        catKnowsHim.AddHint(new StoryNode(string.Format("{0} looks as though he's remembering something from long ago", catName)));
+        catKnowsHim.AddHint(new StoryNode(string.Format("<--{0} looks as though he wants to talk about the other cat-->", catName)));
+        catKnowsHim.AddHint(new StoryNode(string.Format("<--{0} just needs an excuse to explain how he knows the other cat-->", catName)));
         
         StoryNode hobbiesWithoutWindow = new StoryNode("My other hobbies are eating and sleeping.");
         hobbiesWithoutWindow.TakeEntireSubgraphOf(hobbies);
         
+        //leaf for the window branch
         StoryNode catWantsToStopTalkingAboutRiddle = new StoryNode("Let's discuss something else.", ()=> {
+            //can't talk about window anymore, finished with that branch.
             hobbies.RemoveInputBasedTransition("window");
+            //go back to hobbies
             View.SetStory(hobbiesWithoutWindow);
+
+            //update the text after a time
+            Timer timer = TimerFactory.Instance.NewTimer();
+            timer.onTimeUp = () => { View.DisplayTextOfCurrentStoryNode(); };
+            timer.secondsDuration = 5f;
+            timer.Begin();
+
+            //add a new branch from root.
+            root.AddInputBasedTransition("riddle".MatchSomewhere(), riddleBranch);
+
+
         });
 
         hisNameWasRiddle.AddFreeTransition(catWantsToStopTalkingAboutRiddle);
@@ -146,6 +164,40 @@ public class ChatToCat : StoryModel {
         mother.GraftLoop(new StoryNode("Sorry. Bit spaced out. Thinking of my mom does that to me."), new StoryNode(string.Format("<--{0} is thinking about his mother.-->", catName)));
         dreams.GraftLoop(new StoryNode("Dreams are pretty strange. I wonder if other animals have them."), new StoryNode(string.Format("<--{0}'s just staring into space-->", catName)));
 
-        this.storyRoot = genericRoot;
+        this.storyRoot = root;
+    }
+
+
+
+    /*just abstracting different branches into their own functions. keeps things cleaner
+     * the riddle branch is only accessible after the character gets through the window branch of the hobbies.
+     
+         */
+    private StoryNode RiddleBranch()
+    {
+        StoryNode root = new StoryNode("I told you before. Riddle was a childhood friend.");
+        StoryNode riddleNotBestFriend = new StoryNode("Riddle was not my best friend, by any stretch of the imagination. But after awhile he became my only friend, and that's close enough.");
+        StoryNode sadThingsHappenedToOtherFriends = new StoryNode("Sad things happened to my other friends. I grew up between a road and a park. Cars and coyotes. Lots of cats died.");
+        StoryNode weHunted = new StoryNode("Mostly, Riddle and I hunted. Riddle liked hunting better than I did. I didn't see a point.");
+        StoryNode huntingIsDumbWeWereHousecats = new StoryNode("Both of us were housecats. We were being fed every day. What need was there to hunt?");
+        StoryNode huntedGrasshoppers = new StoryNode("We mostly hunted grasshoppers. There weren't a lot of mice, surprisingly. Maybe the coyotes scared them away.");
+        StoryNode kazAvoidedBirds = new StoryNode("I avoided birds. The woman I live with hit me if I ever killed a bird.");
+        StoryNode riddleLikedGrassHoppers = new StoryNode("Riddle swore that grasshoppers tasted better than cat food.");
+        StoryNode riddleWasObnoxious = new StoryNode("I considered Riddle a bit obnoxious. He was very proud of himself, and I didn't think he was justified in that.");
+        StoryNode riddleDidntLikeMeEither = new StoryNode("I don't think Riddle liked me very much, either.");
+        StoryNode riddleWantedCompany = new StoryNode("I think Riddle wanted company. Everyone wants company sometimes, especially when things are sad.");
+        StoryNode dontHateRiddle = new StoryNode("I don't hate Riddle. But I don't have any interest in speaking to him. I don't think he's interested in speaking to me, either.");
+        StoryNode riddleHangsAroundWindow = new StoryNode("Riddle hangs around the window sometimes.");
+
+        root.AddFreeTransition(riddleNotBestFriend);
+        riddleNotBestFriend.AddInputBasedTransition("(do|common|get along)".MatchSomewhere(), weHunted);
+        weHunted.GraftStep("(why|what.*//?|how come)".MatchSomewhere(), huntingIsDumbWeWereHousecats);
+        riddleNotBestFriend.GraftStep("(other|what.*//?|why?|friend)".MatchSomewhere(), sadThingsHappenedToOtherFriends);
+        weHunted.AddInputBasedTransition("(what|hunt|catch|kill|go (for|after))".MatchSomewhere(), huntedGrasshoppers);
+        huntedGrasshoppers.GraftStep("(gross|disgusting|e+w|sick)".MatchSomewhere(), new StoryNode("Yeah, I know. Look -Riddle- liked grasshoppers. Not me."));
+
+
+
+        return root;
     }
 }

@@ -35,7 +35,7 @@ public class StoryView : MonoBehaviour, ISubscriber {
         toggleActiveButton.GetComponent<Button>().onClick.AddListener(ToggleActive);
         toggleActiveButtonText = toggleActiveButton.GetComponentInChildren<Text>();
 
-        SetStoryToRoot();
+        
         Deactivate();
 
     }
@@ -53,12 +53,19 @@ public class StoryView : MonoBehaviour, ISubscriber {
 
     private void AdvanceStory(string playerInput)
     {
-        
+        playerInput = playerInput.Trim().ToLower();
+
         this.story = this.story.GetTransition(playerInput);
 
-        this.uIText.text = story.text;
+        DisplayTextOfCurrentStoryNode();
 
         story.effectUponReaching();
+    }
+
+
+    public void DisplayTextOfCurrentStoryNode()
+    {
+        this.uIText.text = story.text;
     }
 
 
@@ -82,6 +89,7 @@ public class StoryView : MonoBehaviour, ISubscriber {
         MyEvents.PlayerEnteredNewInput.UnSubscribe(this);
         this.textBox.SetActive(false);
         toggleActiveButtonText.text = model.GetTitle();
+        SetStoryToRoot();
     }
 
     public void Activate() {
