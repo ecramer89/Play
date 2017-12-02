@@ -14,6 +14,9 @@ public class StoryView : MonoBehaviour, ISubscriber {
     private GameObject toggleActiveButton;
     private Text toggleActiveButtonText;
 
+    private GameObject characterImagePanel;
+    private Image characterImage;
+
     private StoryNode story;
 
     private bool active; 
@@ -35,7 +38,11 @@ public class StoryView : MonoBehaviour, ISubscriber {
         toggleActiveButton.GetComponent<Button>().onClick.AddListener(ToggleActive);
         toggleActiveButtonText = toggleActiveButton.GetComponentInChildren<Text>();
 
-        
+
+        characterImagePanel = this.gameObject.FindChildWithName("CharacterImage");
+        characterImage = characterImagePanel.GetComponent<Image>();
+
+
         Deactivate();
 
     }
@@ -100,6 +107,11 @@ public class StoryView : MonoBehaviour, ISubscriber {
         toggleActiveButtonText.text = "End";
     }
 
+
+    public void UpdateImage(Sprite sprite)
+    {
+        characterImage.sprite = sprite;
+    }
 
 
 

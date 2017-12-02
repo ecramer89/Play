@@ -4,11 +4,19 @@ using UnityEngine;
 using ExtensionMethods;
 using UnityEngine.UI;
 using System.Reflection;
-
+using System;
 
 public class ChatToCat : StoryModel {
 
-    [SerializeField] Sprite[] characterImages;
+
+    [SerializeField] Sprite[] catImages;
+    //image array index codes
+    const int NORMAL_IMAGE = 0;
+    const int ANGRY_IMAGE = 1;
+    const int SKEPTICAL_IMAGE = 2;
+    const int SAD_IMAGE = 3;
+
+
     private string catName = "Puzzle";
 
 
@@ -30,6 +38,30 @@ public class ChatToCat : StoryModel {
 
     StoryNode riddle = new StoryNode("I told you before. Riddle was a childhood friend.");
 
+
+
+    //for persisting:
+    //i think we will need to construct the 'base' models no matter what
+    //the file can indicate the referential structure of the tree
+    //and what you can construct is a 'template' that wont have any of the actual data
+    //it will be a special "tree info" class object just containingn lists and dictis of strings
+    //the strings (or ints) will be a special id that needs be consistent always
+    //could just be the objects hash code i guess; override so it's based on the hash coide of the text
+    //then, dump EACH individual storynode (including even those defined -inline-, not referenced outside of a branch)
+    //into a set or a dict so that
+    //we can retrieve the actual object data from the set at runtime given the ids in the map.
+
+        //IMPORTANT the identifier CANNOT be base don the text because that does actually change. you will need to assign each a unique id that DOES NOT CHANGE
+        //e.g. we change the text of the hobbies node after we finish the window branch
+
+
+    public void Start()
+    {
+        catImages = Resources.LoadAll<Sprite>("Images/cat") as Sprite[];
+    }
+
+
+
     protected override void InitializeStoryTitle()
     {
         title = "Chat to cat";
@@ -46,6 +78,8 @@ public class ChatToCat : StoryModel {
             this.storyRoot = playerAngeredCat; //next time player engages cat, he'll encounter the player angered cat root.
 
             View.SetStoryToRoot();
+
+            View.UpdateImage(catImages[ANGRY_IMAGE]);
 
             Timer timer = TimerFactory.Instance.NewTimer();
             timer.onTimeUp = () => { View.Deactivate(); };
@@ -79,12 +113,15 @@ public class ChatToCat : StoryModel {
         {
             this.container = container;
 
+         
 
-            foreach(MethodInfo mi in this.GetType().GetMethods())
+            foreach(MethodInfo mi in typeof(BranchInitializer).GetMethods(BindingFlags.Public | BindingFlags.Instance ))
             {
+               
                 if (mi.Name.Contains("Init"))
                 {
-                    mi.Invoke(this, (Object[])null);
+                   
+                       mi.Invoke(this,null);
                 }
             }
         }
@@ -92,9 +129,9 @@ public class ChatToCat : StoryModel {
 
 
 
-        private void InitHobbies()
+        public void InitHobbies()
         {
-
+            
             container.catHobbies.AddInputBasedTransition("window", container.hobbiesWindow);
             container.catHobbies.AddInputBasedTransition("sleep".MatchSomewhere(), container.hobbiesSleeping);
             container.catHobbies.AddInputBasedTransition("(eat|food)".MatchSomewhere(), container.hobbiesEating);
@@ -104,11 +141,12 @@ public class ChatToCat : StoryModel {
 
 
 
-        private void InitPlayerAngeredCat()
+        public void InitPlayerAngeredCat()
         {
             StoryNode acceptApology = new StoryNode("Ok whatever.", () =>
             {
                 container.storyRoot = container.root; //cat's okay now, so make the root the generic root.
+                container.View.UpdateImage(container.catImages[NORMAL_IMAGE]);
             });
 
             container.playerAngeredCat.AddHint(new StoryNode("I'd accept an apology."));
@@ -118,7 +156,7 @@ public class ChatToCat : StoryModel {
         }
 
 
-        private void InitWindow()
+        public void InitWindow()
         {
             StoryNode sawSomethingInteresting = new StoryNode("There was a time... I saw something very interesting.");
             sawSomethingInteresting.GraftStep(new StoryNode(string.Format("<--{0} has a faraway look in his eyes -->", container.catName)));
@@ -134,7 +172,10 @@ public class ChatToCat : StoryModel {
 
             container.hobbiesWindow.AddInputBasedTransition("(see|saw|what was|look)".MatchSomewhere(), sawAnotherCat);
 
-            StoryNode catLooksAwkward = new StoryNode(string.Format("<-- {0} looks very uncomfortable -->", container.catName));
+            StoryNode catLooksAwkward = new StoryNode(string.Format("<-- {0} looks very uncomfortable -->", container.catName), ()=> {
+
+                container.View.UpdateImage(container.catImages[SAD_IMAGE]);
+            });
             sawAnotherCat2.AddFreeTransition(catLooksAwkward);
 
             catLooksAwkward.GraftStep(new StoryNode("Maybe I shouldn't have brought this up. I don't know why I did."));
@@ -151,21 +192,25 @@ public class ChatToCat : StoryModel {
             catKnowsHim.AddHint(new StoryNode(string.Format("<--{0} looks as though he wants to talk about the other cat-->", container.catName)));
             catKnowsHim.AddHint(new StoryNode(string.Format("<--{0} just needs an excuse to explain how he knows the other cat-->", container.catName)));
 
-            StoryNode hobbiesWithoutWindow = new StoryNode("My other hobbies are eating and sleeping.");
-            hobbiesWithoutWindow.TakeEntireSubgraphOf(container.catHobbies);
-
+         
             //leaf for the window branch
             StoryNode catWantsToStopTalkingAboutRiddle = new StoryNode("Let's discuss something else.", () =>
             {
                 //can't talk about window anymore, finished with that branch.
+                container.catHobbies.text = "My other hobbies are eating and sleeping.";
                 container.catHobbies.RemoveInputBasedTransition("window");
                 //go back to hobbies
-                container.View.SetStory(hobbiesWithoutWindow);
+                container.View.SetStory(container.catHobbies);
 
                 //update the text after a time
                 Timer timer = TimerFactory.Instance.NewTimer();
-                timer.onTimeUp = () => { container.View.DisplayTextOfCurrentStoryNode(); };
-                timer.secondsDuration = 5f;
+                timer.onTimeUp = () => {
+
+                    container.View.DisplayTextOfCurrentStoryNode();
+                    container.View.UpdateImage(container.catImages[NORMAL_IMAGE]);
+
+                };
+                timer.secondsDuration = 3f;
                 timer.Begin();
 
                 //add a new branch from root.
@@ -178,12 +223,16 @@ public class ChatToCat : StoryModel {
         }
 
 
-        private void InitSleepingHobby()
+        public void InitSleepingHobby()
         {
             StoryNode mother = new StoryNode("My mother was a nice cat. She was big and fluffy, " +
                 "not at all like my father. I only saw my father for a moment just seconds after I was old " +
                 "enough to open my eyes. Male cats don't stick around too long, you see. We're not generally very interested in raising kittens. " +
-                "Anyway, my mother's name was Diamond.");
+                "Anyway, my mother's name was Diamond.", () =>
+                {
+                    container.View.UpdateImage(container.catImages[NORMAL_IMAGE]);
+
+                });
 
             StoryNode dreams = new StoryNode("I suppose the most interesting dream I've ever had was one where I was a fish. " +
                 "I was swimming in circles in an aquarium, around a little plastic treasure chest, just like the one in the aquarium over in the living room. " +
@@ -193,7 +242,12 @@ public class ChatToCat : StoryModel {
 
             container.hobbiesSleeping.AddInputBasedTransition("(mother|mom)".MatchSomewhere(), mother);
             container.hobbiesSleeping.AddInputBasedTransition("dream".MatchSomewhere(), dreams);
-            container.hobbiesSleeping.AddHint(new StoryNode("It's no good... you've got me thinking about my mother... and dreams."));
+            container.hobbiesSleeping.AddHint(new StoryNode("It's no good... you've got me thinking about my mother... and dreams.", () =>
+                {
+                container.View.UpdateImage(container.catImages[SKEPTICAL_IMAGE]);
+
+                })
+            );
 
             mother.AddInputBasedTransition("dream".MatchSomewhere(), container.hobbiesSleeping);
             dreams.AddInputBasedTransition("(mother|mom)".MatchSomewhere(), container.hobbiesSleeping);
@@ -203,7 +257,7 @@ public class ChatToCat : StoryModel {
 
         }
 
-        private void InitEatingHobby()
+        public void InitEatingHobby()
         {
             StoryNode eating1 = new StoryNode("There's a lot of variation among the different food brands.");
             StoryNode eating2 = new StoryNode("There's of course different flavors of cat food, like chicken, fish, beef; then within the flavor types there's wet and dry variants.");
@@ -221,7 +275,7 @@ public class ChatToCat : StoryModel {
         }
 
 
-        private void InitRiddle()
+        public void InitRiddle()
         {
 
             StoryNode riddleNotBestFriend = new StoryNode("Riddle was not my best friend, by any stretch of the imagination. But after awhile he became my only friend, and that's close enough.");
