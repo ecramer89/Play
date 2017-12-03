@@ -548,7 +548,7 @@ Prefab:
         type: 2}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: dbb9d376fe5a4e149b0d737a3ffb540c,
+      objectReference: {fileID: 21300000, guid: 3cb81c0137287bb4cb6ca1bdb23ecf21,
         type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 7fd05a85e35c4d941af9e3dd9d7cc3e4, type: 2}
@@ -569,7 +569,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2822720fbe184554d81c9e4fe5d45ee9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  characterImages: []
+  catImages: []
 --- !u!1 &821203010
 GameObject:
   m_ObjectHideFlags: 0

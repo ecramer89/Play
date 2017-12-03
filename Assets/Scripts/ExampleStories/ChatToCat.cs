@@ -11,10 +11,19 @@ public class ChatToCat : StoryModel {
 
     [SerializeField] Sprite[] catImages;
     //image array index codes
-    const int NORMAL_IMAGE = 0;
-    const int ANGRY_IMAGE = 1;
-    const int SKEPTICAL_IMAGE = 2;
-    const int SAD_IMAGE = 3;
+    const int CONTEMPLATIVE = 0;
+    const int SMUG = 1;
+    const int UNCOMFORTABLE = 2;
+    const int SURPRISED = 3;
+    const int HAPPY = 4;
+    const int QUIZZICAL = 5;
+    const int ANNOYED = 6;
+    const int MISCHIEVIOUS = 7;
+    const int ANGRY = 8;
+    const int PLEADING = 9;
+    const int BASHFUL = 10;
+    const int SAD = 11;
+
 
 
     private string catName = "Puzzle";
@@ -54,6 +63,11 @@ public class ChatToCat : StoryModel {
         //IMPORTANT the identifier CANNOT be base don the text because that does actually change. you will need to assign each a unique id that DOES NOT CHANGE
         //e.g. we change the text of the hobbies node after we finish the window branch
 
+    private void UpdateImage(int imageCode)
+    {
+        View.UpdateImage(catImages[imageCode]);
+    }
+
 
     public void Start()
     {
@@ -79,7 +93,7 @@ public class ChatToCat : StoryModel {
 
             View.SetStoryToRoot();
 
-            View.UpdateImage(catImages[ANGRY_IMAGE]);
+            View.UpdateImage(catImages[ANGRY]);
 
             Timer timer = TimerFactory.Instance.NewTimer();
             timer.onTimeUp = () => { View.Deactivate(); };
@@ -90,8 +104,8 @@ public class ChatToCat : StoryModel {
         }));
 
     
-        root.AddHint(new StoryNode("You could ask me about my hobbies..."));
-        root.GraftStep("(hello|hi|greetings)".MatchSomewhere(), new StoryNode("Hello"));
+        root.AddHint(new StoryNode("You could ask me about my hobbies...", ()=> { View.UpdateImage(catImages[ANNOYED]); }));
+        root.GraftStep("(hello|hi|greetings)".MatchSomewhere(), new StoryNode("Hello", ()=> { View.UpdateImage(catImages[HAPPY]); }));
 
         new BranchInitializer(this);
 
@@ -136,7 +150,9 @@ public class ChatToCat : StoryModel {
             container.catHobbies.AddInputBasedTransition("sleep".MatchSomewhere(), container.hobbiesSleeping);
             container.catHobbies.AddInputBasedTransition("(eat|food)".MatchSomewhere(), container.hobbiesEating);
 
-            container.catHobbies.AddHint(new StoryNode("It's somewhat rude to deny a direct request."));
+            container.catHobbies.AddHint(new StoryNode("It's somewhat rude to deny a direct request.", ()=> {
+                container.View.UpdateImage(container.catImages[ANNOYED]);
+            }));
         }
 
 
@@ -146,7 +162,7 @@ public class ChatToCat : StoryModel {
             StoryNode acceptApology = new StoryNode("Ok whatever.", () =>
             {
                 container.storyRoot = container.root; //cat's okay now, so make the root the generic root.
-                container.View.UpdateImage(container.catImages[NORMAL_IMAGE]);
+                container.View.UpdateImage(container.catImages[CONTEMPLATIVE]);
             });
 
             container.playerAngeredCat.AddHint(new StoryNode("I'd accept an apology."));
@@ -174,7 +190,7 @@ public class ChatToCat : StoryModel {
 
             StoryNode catLooksAwkward = new StoryNode(string.Format("<-- {0} looks very uncomfortable -->", container.catName), ()=> {
 
-                container.View.UpdateImage(container.catImages[SAD_IMAGE]);
+                container.View.UpdateImage(container.catImages[UNCOMFORTABLE]);
             });
             sawAnotherCat2.AddFreeTransition(catLooksAwkward);
 
@@ -185,7 +201,9 @@ public class ChatToCat : StoryModel {
 
             catLooksAwkward.AddInputBasedTransition("(wrong?|okay?|uncomfortable|what's up?)".MatchSomewhere(), catKnowsHim);
 
-            StoryNode hisNameWasRiddle = new StoryNode("He was a childhood friend. His name is Riddle.");
+            StoryNode hisNameWasRiddle = new StoryNode("He was a childhood friend. His name is Riddle.", ()=> {
+                container.View.UpdateImage(container.catImages[SAD]);
+            });
 
             catKnowsHim.AddInputBasedTransition("(name|who|how|from where|from when|how long)".MatchSomewhere(), hisNameWasRiddle);
             catKnowsHim.AddHint(new StoryNode(string.Format("{0} looks as though he's remembering something from long ago", container.catName)));
@@ -207,7 +225,7 @@ public class ChatToCat : StoryModel {
                 timer.onTimeUp = () => {
 
                     container.View.DisplayTextOfCurrentStoryNode();
-                    container.View.UpdateImage(container.catImages[NORMAL_IMAGE]);
+                    container.View.UpdateImage(container.catImages[CONTEMPLATIVE]);
 
                 };
                 timer.secondsDuration = 3f;
@@ -230,21 +248,24 @@ public class ChatToCat : StoryModel {
                 "enough to open my eyes. Male cats don't stick around too long, you see. We're not generally very interested in raising kittens. " +
                 "Anyway, my mother's name was Diamond.", () =>
                 {
-                    container.View.UpdateImage(container.catImages[NORMAL_IMAGE]);
+                    container.View.UpdateImage(container.catImages[HAPPY]);
 
                 });
 
             StoryNode dreams = new StoryNode("I suppose the most interesting dream I've ever had was one where I was a fish. " +
                 "I was swimming in circles in an aquarium, around a little plastic treasure chest, just like the one in the aquarium over in the living room. " +
                 "You should look at it sometime. It's very peaceful. In my dream the hand appeared and sprinkled some pellets into the aquarium. " +
-                "I swam up to eat them, but when I drew close I saw that the pellets were actually eyeballs. Then I woke up.");
+                "I swam up to eat them, but when I drew close I saw that the pellets were actually eyeballs. Then I woke up.", ()=>{
+                    container.View.UpdateImage(container.catImages[QUIZZICAL]);
+
+                });
 
 
             container.hobbiesSleeping.AddInputBasedTransition("(mother|mom)".MatchSomewhere(), mother);
             container.hobbiesSleeping.AddInputBasedTransition("dream".MatchSomewhere(), dreams);
             container.hobbiesSleeping.AddHint(new StoryNode("It's no good... you've got me thinking about my mother... and dreams.", () =>
                 {
-                container.View.UpdateImage(container.catImages[SKEPTICAL_IMAGE]);
+                container.View.UpdateImage(container.catImages[BASHFUL]);
 
                 })
             );
@@ -259,7 +280,10 @@ public class ChatToCat : StoryModel {
 
         public void InitEatingHobby()
         {
-            StoryNode eating1 = new StoryNode("There's a lot of variation among the different food brands.");
+            StoryNode eating1 = new StoryNode("There's a lot of variation among the different food brands.", ()=> {
+
+                container.View.UpdateImage(container.catImages[HAPPY]);
+            });
             StoryNode eating2 = new StoryNode("There's of course different flavors of cat food, like chicken, fish, beef; then within the flavor types there's wet and dry variants.");
             StoryNode eating3 = new StoryNode("I'm no mathematician, but there's a lot of combinations of cat food.");
 
@@ -267,7 +291,10 @@ public class ChatToCat : StoryModel {
             eating1.GraftStep(eating2);
             eating2.GraftStep(eating3);
 
-            StoryNode favoriteFoods = new StoryNode("It depends... if it's wet food, probably Friskies chicken. If it's dry food- uh, well. I kind of hate dry food.");
+            StoryNode favoriteFoods = new StoryNode("It depends... if it's wet food, probably Friskies chicken. If it's dry food- uh, well. I kind of hate dry food.", ()=> {
+                container.View.UpdateImage(container.catImages[BASHFUL]);
+
+            });
 
             container.hobbiesEating.AddHint(new StoryNode("Are you curious about my preferences?"));
             container.hobbiesEating.AddInputBasedTransition("(prefer|favorite|like|love|best)".MatchSomewhere(), favoriteFoods);
