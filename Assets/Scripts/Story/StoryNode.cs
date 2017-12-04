@@ -19,6 +19,8 @@ public class StoryNode  {
 
     private event Action<string> InputBasedTransitionRemovedFromStory = (string input) => { };
 
+    
+
     public StoryNode(string text)  {
         this.text = text;
         this.inputBasedTransitions = new Dictionary<string, StoryNode>();

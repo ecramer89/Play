@@ -83,10 +83,12 @@ public class StoryView : MonoBehaviour, ISubscriber {
         if (active)
         {
             Activate();
+            MyEvents.StoryInitiated.Fire(model.name);
         }
         else
         {
             Deactivate();
+            MyEvents.StorySuspended.Fire(model.name);
         }
 
     }
@@ -112,8 +114,6 @@ public class StoryView : MonoBehaviour, ISubscriber {
     {
         characterImage.sprite = sprite;
     }
-
-
 
 
 }
